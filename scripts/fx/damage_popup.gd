@@ -9,11 +9,15 @@ const RISE_SPEED := 36.0
 
 
 func setup(amount: int, color: Color = Color(1.0, 0.85, 0.35, 1.0)) -> void:
+	setup_text("-%d" % amount, color)
+
+
+func setup_text(text: String, color: Color = Color(1.0, 0.85, 0.35, 1.0)) -> void:
 	_label = Label.new()
-	_label.text = "-%d" % amount
+	_label.text = text
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_label.position = Vector2(-18, -8)
-	_label.size = Vector2(36, 16)
+	_label.position = Vector2(-22, -8)
+	_label.size = Vector2(44, 16)
 	_label.add_theme_font_size_override("font_size", 14)
 	_label.add_theme_color_override("font_color", color)
 	_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))

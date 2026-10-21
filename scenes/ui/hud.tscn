@@ -76,29 +76,6 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Командование"
 
-[node name="SectorLabel" type="Label" parent="Root/SideMenu/Margin/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Сектор: 0"
-
-[node name="SectorButtons" type="HBoxContainer" parent="Root/SideMenu/Margin/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="BtnInfantry" type="Button" parent="Root/SideMenu/Margin/VBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-text = "Пехота"
-
-[node name="BtnArcher" type="Button" parent="Root/SideMenu/Margin/VBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-text = "Лучники"
-
 [node name="BtnHeal" type="Button" parent="Root/SideMenu/Margin/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 30)
@@ -154,3 +131,65 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 11
 autowrap_mode = 3
 text = "Нанимайте войска."
+
+[node name="HireMenu" type="PanelContainer" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -268.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 280.0
+grow_horizontal = 0
+mouse_filter = 0
+
+[node name="Margin" type="MarginContainer" parent="Root/HireMenu"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="Root/HireMenu/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HireTitle" type="Label" parent="Root/HireMenu/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Найм войск"
+
+[node name="HireSep" type="HSeparator" parent="Root/HireMenu/Margin/VBox"]
+layout_mode = 2
+
+[node name="SectorLabel" type="Label" parent="Root/HireMenu/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Сектор: 0"
+
+[node name="SectorButtons" type="HBoxContainer" parent="Root/HireMenu/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BtnInfantry" type="Button" parent="Root/HireMenu/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "Пехота"
+
+[node name="BtnArcher" type="Button" parent="Root/HireMenu/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "Лучники"
+
+[node name="BtnEagle" type="Button" parent="Root/HireMenu/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "Орлы"

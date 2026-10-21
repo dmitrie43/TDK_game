@@ -4,6 +4,7 @@ class_name UnitFactory
 
 const _EnemyFlyer := preload("res://scripts/units/enemy_flyer.gd")
 const _EnemyBossKnight := preload("res://scripts/units/enemy_boss_knight.gd")
+const _PlayerEagle := preload("res://scripts/units/player_eagle.gd")
 
 @export var container_path: NodePath = ^"../Units"
 
@@ -39,6 +40,16 @@ func spawn_player_archer(sector: int) -> UnitBase:
 	var unit := PlayerArcher.new()
 	unit.home_sector = sector
 	unit.position = SectorMap.kingdom_post(sector)
+	_container.add_child(unit)
+	return unit
+
+
+func spawn_player_eagle(sector: int) -> UnitBase:
+	## Spawn near kingdom rim; flies and patrols like infantry.
+	var pos := SectorMap.clamp_to_sector_ray(Vector2.ZERO, sector, GameConfig.KINGDOM_RADIUS + 24.0)
+	var unit: UnitBase = _PlayerEagle.new()
+	unit.home_sector = sector
+	unit.position = pos
 	_container.add_child(unit)
 	return unit
 

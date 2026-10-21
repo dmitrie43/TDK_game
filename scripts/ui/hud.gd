@@ -7,8 +7,10 @@ const _SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const _BossRewardMenuScript := preload("res://scripts/ui/boss_reward_menu.gd")
 
 @onready var side_menu: PanelContainer = %SideMenu
+@onready var hire_menu: PanelContainer = %HireMenu
 @onready var root_ui: Control = $Root
 @onready var title_label: Label = %TitleLabel
+@onready var hire_title: Label = %HireTitle
 @onready var gold_label: Label = %GoldLabel
 @onready var hp_label: Label = %HpLabel
 @onready var wave_label: Label = %WaveLabel
@@ -17,6 +19,7 @@ const _BossRewardMenuScript := preload("res://scripts/ui/boss_reward_menu.gd")
 @onready var status_label: Label = %StatusLabel
 @onready var btn_infantry: Button = %BtnInfantry
 @onready var btn_archer: Button = %BtnArcher
+@onready var btn_eagle: Button = %BtnEagle
 @onready var btn_heal: Button = %BtnHeal
 @onready var btn_wave: Button = %BtnWave
 @onready var btn_upgrades: Button = %BtnUpgrades
@@ -56,7 +59,7 @@ func setup(recruitment: Recruitment) -> void:
 
 func _ready() -> void:
 	_apply_menu_style()
-	_fit_side_menu_height()
+	_fit_menu_heights()
 	_upgrade_menu = _UpgradeMenuScript.new()
 	root_ui.add_child(_upgrade_menu)
 	_settings_menu = _SettingsMenuScript.new()
@@ -72,6 +75,7 @@ func _ready() -> void:
 	GameState.boss_killed.connect(_on_boss_killed)
 	btn_infantry.pressed.connect(_on_hire_infantry)
 	btn_archer.pressed.connect(_on_hire_archer)
+	btn_eagle.pressed.connect(_on_hire_eagle)
 	btn_heal.pressed.connect(_on_heal_kingdom)
 	btn_wave.pressed.connect(_on_push_wave)
 	btn_upgrades.pressed.connect(_on_open_upgrades)
@@ -87,35 +91,46 @@ func _ready() -> void:
 	_refresh_sector_label()
 	btn_infantry.text = "Пехота  ·  %d" % GameConfig.COST_PLAYER_INFANTRY
 	btn_archer.text = "Лучники  ·  %d" % GameConfig.COST_PLAYER_ARCHER
+	btn_eagle.text = "Орлы  ·  %d" % GameConfig.COST_PLAYER_EAGLE
 	btn_heal.text = "Лечение +%d  ·  %d" % [GameConfig.KINGDOM_HEAL_AMOUNT, GameConfig.COST_KINGDOM_HEAL]
 	btn_wave.text = "Толчок  ·  %d" % GameConfig.COST_PUSH_WAVE
 	btn_upgrades.text = "Улучшения"
 	btn_settings.text = "Настройки"
 	btn_cheat_gold.text = "+%d золота" % GameState.CHEAT_GOLD_AMOUNT
 	btn_restart.text = "Заново"
-	status_label.text = "Нанимайте войска."
+	status_label.text = "Нанимайте войска справа."
 	wave_label.text = "Волна: —"
 	# Refit after sector buttons exist / visibility changes.
-	call_deferred("_fit_side_menu_height")
+	call_deferred("_fit_menu_heights")
 
 
-func _fit_side_menu_height() -> void:
-	## Keep panel only as tall as content — don't stretch over the battlefield.
+func _fit_menu_heights() -> void:
+	## Keep panels only as tall as content — don't stretch over the battlefield.
 	await get_tree().process_frame
-	var content := side_menu.get_child(0) as Control
+	_fit_panel_height(side_menu)
+	_fit_panel_height(hire_menu)
+
+
+func _fit_panel_height(panel: PanelContainer) -> void:
+	if panel == null:
+		return
+	var content := panel.get_child(0) as Control
 	if content == null:
 		return
 	var h := content.get_combined_minimum_size().y + 4.0
-	side_menu.offset_bottom = side_menu.offset_top + h
+	panel.offset_bottom = panel.offset_top + h
 
 
 func _apply_menu_style() -> void:
 	side_menu.add_theme_stylebox_override("panel", _make_panel_style())
+	hire_menu.add_theme_stylebox_override("panel", _make_panel_style())
 	title_label.add_theme_color_override("font_color", COL_TITLE)
+	hire_title.add_theme_color_override("font_color", COL_TITLE)
 	for lab in [sector_label, status_label]:
 		lab.add_theme_color_override("font_color", COL_TEXT)
 	_style_button(btn_infantry)
 	_style_button(btn_archer)
+	_style_button(btn_eagle)
 	_style_button(btn_heal)
 	_style_button(btn_wave)
 	_style_button(btn_upgrades)
@@ -181,7 +196,7 @@ func select_sector(sector: int) -> void:
 	if _recruitment and _recruitment.pending_archer_hire:
 		_recruitment.confirm_archer_sector(sector)
 		_refresh_sector_label()
-		call_deferred("_fit_side_menu_height")
+		call_deferred("_fit_menu_heights")
 		return
 	if _recruitment:
 		_recruitment.set_selected_sector(sector)
@@ -258,9 +273,16 @@ func _on_hire_archer() -> void:
 		return
 	if _recruitment.pending_archer_hire:
 		_recruitment.cancel_archer_hire()
-		call_deferred("_fit_side_menu_height")
+		call_deferred("_fit_menu_heights")
 		return
 	_recruitment.begin_archer_hire()
+
+
+func _on_hire_eagle() -> void:
+	if _recruitment:
+		if _recruitment.pending_archer_hire:
+			_recruitment.cancel_archer_hire()
+		_recruitment.hire_eagle()
 
 
 func _on_archer_hire_started() -> void:
@@ -268,7 +290,7 @@ func _on_archer_hire_started() -> void:
 	status_label.text = "Выберите сектор"
 	status_label.add_theme_color_override("font_color", COL_GOLD)
 	_refresh_sector_label()
-	call_deferred("_fit_side_menu_height")
+	call_deferred("_fit_menu_heights")
 
 
 func _on_archer_hire_cancelled() -> void:
@@ -276,7 +298,7 @@ func _on_archer_hire_cancelled() -> void:
 	status_label.text = "Найм отменён"
 	status_label.add_theme_color_override("font_color", Color(0.75, 0.8, 0.7, 1))
 	_refresh_sector_label()
-	call_deferred("_fit_side_menu_height")
+	call_deferred("_fit_menu_heights")
 
 
 func _on_hire_failed(reason: String) -> void:
@@ -286,13 +308,20 @@ func _on_hire_failed(reason: String) -> void:
 
 
 func _on_hire_succeeded(kind: GameConfig.UnitKind, sector: int) -> void:
-	var name := "Пехота" if kind == GameConfig.UnitKind.INFANTRY else "Лучники"
+	var name := "Пехота"
+	match kind:
+		GameConfig.UnitKind.ARCHER:
+			name = "Лучники"
+		GameConfig.UnitKind.EAGLE:
+			name = "Орлы"
+		_:
+			name = "Пехота"
 	status_label.text = "%s → с.%d" % [name, sector]
 	status_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.65, 1))
 	if kind == GameConfig.UnitKind.ARCHER:
 		sector_buttons.visible = false
 	_refresh_sector_label()
-	call_deferred("_fit_side_menu_height")
+	call_deferred("_fit_menu_heights")
 
 
 func _on_heal_kingdom() -> void:
@@ -354,7 +383,7 @@ func _on_cheats_changed(enabled: bool) -> void:
 	cheat_sep.visible = enabled
 	cheat_title.visible = enabled
 	btn_cheat_gold.visible = enabled
-	call_deferred("_fit_side_menu_height")
+	call_deferred("_fit_menu_heights")
 
 
 func _on_cheat_gold() -> void:
@@ -382,13 +411,14 @@ func _on_game_over(victory: bool) -> void:
 	)
 	btn_infantry.disabled = true
 	btn_archer.disabled = true
+	btn_eagle.disabled = true
 	btn_heal.disabled = true
 	btn_wave.disabled = true
 	btn_upgrades.disabled = true
 	sector_buttons.visible = false
 	if not victory:
 		_show_defeat_overlay()
-	call_deferred("_fit_side_menu_height")
+	call_deferred("_fit_menu_heights")
 
 
 func _show_defeat_overlay() -> void:

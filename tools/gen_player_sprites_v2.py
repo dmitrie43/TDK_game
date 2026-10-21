@@ -334,6 +334,16 @@ def main() -> None:
 		"dark",
 		"dark",
 	)
+	## Eagle: only idle ref is consistent; flap/attack refs diverge into bat hybrids.
+	build_unit(
+		"player_eagle",
+		REF / "player_eagle_idle.jpg",
+		None,
+		REF / "player_eagle_idle.jpg",
+		"dark",
+		"dark",
+		"dark",
+	)
 	print("done ->", OUT)
 
 

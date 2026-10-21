@@ -7,6 +7,8 @@ const ID_POISON_ARROWS := &"boss_poison_arrows"
 const ID_INF_ARMOR := &"boss_inf_armor"
 const ID_INF_BLADES := &"boss_inf_blades"
 const ID_ARC_ARMOR := &"boss_arc_armor"
+const ID_EAG_FEATHERS := &"boss_eag_feathers"
+const ID_EAG_BEAKS := &"boss_eag_beaks"
 
 const ALL_IDS: Array[StringName] = [
 	ID_FROST_ARROWS,
@@ -14,6 +16,8 @@ const ALL_IDS: Array[StringName] = [
 	ID_INF_ARMOR,
 	ID_INF_BLADES,
 	ID_ARC_ARMOR,
+	ID_EAG_FEATHERS,
+	ID_EAG_BEAKS,
 ]
 
 
@@ -29,6 +33,10 @@ static func title(id: StringName) -> String:
 			return "Заточенные клинки"
 		ID_ARC_ARMOR:
 			return "Усиленные доспехи лучников"
+		ID_EAG_FEATHERS:
+			return "Стальные перья"
+		ID_EAG_BEAKS:
+			return "Смертоносные клювы"
 		_:
 			return String(id)
 
@@ -47,6 +55,10 @@ static func description(id: StringName) -> String:
 			return "Урон пехоты +%d" % GameConfig.BOSS_REWARD_INF_DAMAGE
 		ID_ARC_ARMOR:
 			return "Здоровье лучников +%d" % GameConfig.BOSS_REWARD_ARC_HP
+		ID_EAG_FEATHERS:
+			return "Здоровье орлов +%d" % GameConfig.BOSS_REWARD_EAG_HP
+		ID_EAG_BEAKS:
+			return "Урон орлов +%d" % GameConfig.BOSS_REWARD_EAG_DAMAGE
 		_:
 			return ""
 
@@ -104,6 +116,16 @@ static func _apply_world(id: StringName, tree: SceneTree) -> void:
 				if n is UnitBase:
 					var u := n as UnitBase
 					if u.kind == GameConfig.UnitKind.ARCHER and u._alive:
+						var old_max := u.max_hp
+						UpgradesScript.apply_to_player_unit(u)
+						var gain := u.max_hp - old_max
+						if gain > 0:
+							u.hp = mini(u.max_hp, u.hp + gain)
+		ID_EAG_FEATHERS, ID_EAG_BEAKS:
+			for n in tree.get_nodes_in_group("player_units"):
+				if n is UnitBase:
+					var u := n as UnitBase
+					if u.kind == GameConfig.UnitKind.EAGLE and u._alive:
 						var old_max := u.max_hp
 						UpgradesScript.apply_to_player_unit(u)
 						var gain := u.max_hp - old_max

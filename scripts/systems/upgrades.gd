@@ -10,9 +10,12 @@ const ID_ARC_SIGHT := &"arc_sight"
 const ID_ARC_FIRE_RATE := &"arc_fire_rate"
 const ID_KING_DURABILITY := &"king_durability"
 const ID_KING_BUILDERS := &"king_builders"
+const ID_EAG_FLIGHT := &"eag_flight"
+const ID_EAG_MANEUVER := &"eag_maneuver"
 
 const CAT_INFANTRY := &"infantry"
 const CAT_ARCHERS := &"archers"
+const CAT_EAGLES := &"eagles"
 const CAT_KINGDOM := &"kingdom"
 
 
@@ -20,6 +23,7 @@ static func categories() -> Array[Dictionary]:
 	return [
 		{"id": CAT_INFANTRY, "title": "Пехота"},
 		{"id": CAT_ARCHERS, "title": "Лучники"},
+		{"id": CAT_EAGLES, "title": "Орлы"},
 		{"id": CAT_KINGDOM, "title": "Королевство"},
 	]
 
@@ -39,6 +43,8 @@ static func upgrades_for(category: StringName) -> Array[Dictionary]:
 			ids = [ID_INF_HORSES, ID_INF_ARMOR, ID_INF_CROSSBOWS]
 		CAT_ARCHERS:
 			ids = [ID_ARC_BOWS, ID_ARC_SIGHT, ID_ARC_FIRE_RATE]
+		CAT_EAGLES:
+			ids = [ID_EAG_FLIGHT, ID_EAG_MANEUVER]
 		CAT_KINGDOM:
 			ids = [ID_KING_DURABILITY, ID_KING_BUILDERS]
 		_:
@@ -104,6 +110,8 @@ static func apply_to_player_unit(unit: UnitBase) -> void:
 		_apply_infantry_stats(unit, false)
 	elif unit.kind == GameConfig.UnitKind.ARCHER:
 		_apply_archer_stats(unit, false)
+	elif unit.kind == GameConfig.UnitKind.EAGLE:
+		_apply_eagle_stats(unit, false)
 
 
 static func builders_heal_amount() -> int:
@@ -131,6 +139,10 @@ static func _base_cost(upgrade_id: StringName) -> int:
 			return GameConfig.COST_UPG_KING_DURABILITY
 		ID_KING_BUILDERS:
 			return GameConfig.COST_UPG_KING_BUILDERS
+		ID_EAG_FLIGHT:
+			return GameConfig.COST_UPG_EAG_FLIGHT
+		ID_EAG_MANEUVER:
+			return GameConfig.COST_UPG_EAG_MANEUVER
 		_:
 			return -1
 
@@ -153,6 +165,10 @@ static func _title(upgrade_id: StringName) -> String:
 			return "Прочность"
 		ID_KING_BUILDERS:
 			return "Строители"
+		ID_EAG_FLIGHT:
+			return "Полёт"
+		ID_EAG_MANEUVER:
+			return "Маневренность"
 		_:
 			return String(upgrade_id)
 
@@ -183,6 +199,12 @@ static func _desc(upgrade_id: StringName, current_lvl: int, preview_lvl: int) ->
 			return "+%d прочности каждые %.0f с (ур.%d)" % [
 				heal, GameConfig.UPG_KING_BUILDERS_INTERVAL, L
 			]
+		ID_EAG_FLIGHT:
+			var eag_pct: int = int(round(GameConfig.UPG_EAG_FLIGHT_SPEED_PER_LEVEL * 100.0 * float(L)))
+			return "Скорость полёта +%d%% (ур.%d)" % [eag_pct, L]
+		ID_EAG_MANEUVER:
+			var dodge_pct: int = int(round(GameConfig.UPG_EAG_MANEUVER_DODGE_PER_LEVEL * 100.0 * float(L)))
+			return "Шанс избежать урона %d%% (ур.%d)" % [dodge_pct, L]
 		_:
 			return ""
 
@@ -201,6 +223,12 @@ static func _apply_world(upgrade_id: StringName, tree: SceneTree) -> void:
 					var u := n as UnitBase
 					if u.kind == GameConfig.UnitKind.ARCHER and u._alive:
 						_apply_archer_stats(u, true)
+		ID_EAG_FLIGHT, ID_EAG_MANEUVER:
+			for n in tree.get_nodes_in_group("player_units"):
+				if n is UnitBase:
+					var u := n as UnitBase
+					if u.kind == GameConfig.UnitKind.EAGLE and u._alive:
+						_apply_eagle_stats(u, true)
 		ID_KING_DURABILITY:
 			_apply_kingdom_durability_level_up()
 		ID_KING_BUILDERS:
@@ -260,6 +288,28 @@ static func _apply_archer_stats(unit: UnitBase, live_purchase: bool = false) -> 
 			unit.hp = mini(unit.max_hp, unit.hp + gain)
 		elif not live_purchase:
 			unit.hp = unit.max_hp
+
+
+static func _apply_eagle_stats(unit: UnitBase, live_purchase: bool = false) -> void:
+	var flight: int = GameState.get_upgrade_level(ID_EAG_FLIGHT)
+	if flight > 0:
+		unit.move_speed = GameConfig.PLAYER_EAGLE_SPEED * (
+			1.0 + GameConfig.UPG_EAG_FLIGHT_SPEED_PER_LEVEL * float(flight)
+		)
+	else:
+		unit.move_speed = GameConfig.PLAYER_EAGLE_SPEED
+
+	var boss_hp: int = GameState.boss_reward_stacks(&"boss_eag_feathers")
+	var boss_dmg: int = GameState.boss_reward_stacks(&"boss_eag_beaks")
+	var target_max: int = GameConfig.PLAYER_EAGLE_HP + GameConfig.BOSS_REWARD_EAG_HP * boss_hp
+	if unit.max_hp != target_max:
+		var gain: int = target_max - unit.max_hp
+		unit.max_hp = target_max
+		if live_purchase and gain > 0:
+			unit.hp = mini(unit.max_hp, unit.hp + gain)
+		elif not live_purchase:
+			unit.hp = unit.max_hp
+	unit.damage = GameConfig.PLAYER_EAGLE_DAMAGE + GameConfig.BOSS_REWARD_EAG_DAMAGE * boss_dmg
 
 
 static func _apply_kingdom_durability_level_up() -> void:

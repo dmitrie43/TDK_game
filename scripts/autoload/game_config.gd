@@ -29,6 +29,8 @@ const COST_UPG_ARC_BOWS := 210
 const COST_UPG_ARC_FIRE_RATE := 190
 const COST_UPG_KING_DURABILITY := 210
 const COST_UPG_KING_BUILDERS := 230
+const COST_UPG_EAG_FLIGHT := 140
+const COST_UPG_EAG_MANEUVER := 170
 ## Per-level effect amounts (total = per_level * current_level).
 const UPG_INF_HORSES_SPEED_PER_LEVEL := 0.08 ## L5 → +40% speed
 const UPG_INF_ARMOR_HP_PER_LEVEL := 20
@@ -41,6 +43,8 @@ const UPG_KING_DURABILITY_HP_PER_LEVEL := 50
 const UPG_KING_BUILDERS_INTERVAL := 10.0
 const UPG_KING_BUILDERS_HEAL_BASE := 2
 const UPG_KING_BUILDERS_HEAL_PER_LEVEL := 1 ## L1→3 … L5→7 HP / interval
+const UPG_EAG_FLIGHT_SPEED_PER_LEVEL := 0.08 ## L5 → +40% speed
+const UPG_EAG_MANEUVER_DODGE_PER_LEVEL := 0.10 ## L1 10% … L5 50%
 
 
 # --- Combat ---
@@ -66,6 +70,11 @@ const ENEMY_INFANTRY_SPEED := 55.0
 const ENEMY_ARCHER_SPEED := 45.0
 const ENEMY_FLYER_SPEED := 80.0
 const PLAYER_INFANTRY_SPEED := 70.0
+const PLAYER_EAGLE_SPEED := 78.0
+const PLAYER_EAGLE_HP := 100
+const PLAYER_EAGLE_DAMAGE := 20
+## Bonus multiplier when eagles hit flying enemies.
+const PLAYER_EAGLE_AIR_DAMAGE_MULT := 1.3
 ## Discrete enemy march: Far → Mid → Near once per interval (not continuous run).
 const ENEMY_STEP_INTERVAL := 4.5
 
@@ -76,11 +85,14 @@ const BOSS_REWARD_POISON_INTERVAL := 2.0
 const BOSS_REWARD_INF_HP := 10
 const BOSS_REWARD_INF_DAMAGE := 5
 const BOSS_REWARD_ARC_HP := 10
+const BOSS_REWARD_EAG_HP := 10
+const BOSS_REWARD_EAG_DAMAGE := 10
 
 # --- Economy (middle: harder than v1, fair early game) ---
 const STARTING_GOLD := 100
 const COST_PLAYER_INFANTRY := 45
 const COST_PLAYER_ARCHER := 60
+const COST_PLAYER_EAGLE := 80
 const GOLD_PER_ENEMY_INFANTRY := 9
 const GOLD_PER_ENEMY_ARCHER := 11
 const GOLD_PER_ENEMY_FLYER := 13
@@ -121,7 +133,7 @@ const FLYER_START_WAVE := 5
 
 enum Zone { KINGDOM, NEAR, MID, FAR, OUT }
 enum Faction { PLAYER, ENEMY }
-enum UnitKind { INFANTRY, ARCHER, FLYER, BOSS }
+enum UnitKind { INFANTRY, ARCHER, FLYER, BOSS, EAGLE }
 ## Enemy march rings along a sector ray.
 enum RouteStep { FAR, MID, NEAR }
 
@@ -129,8 +141,10 @@ enum RouteStep { FAR, MID, NEAR }
 ## Player units: custom generated sheets (idle/walk/attack), not Kenney.
 const SPRITE_PLAYER_INFANTRY := "res://assets/units/player_infantry.png"
 const SPRITE_PLAYER_ARCHER := "res://assets/units/player_archer.png"
+const SPRITE_PLAYER_EAGLE := "res://assets/units/player_eagle.png"
 const SPRITE_PLAYER_INFANTRY_SHEET := "res://assets/units/player_infantry_sheet.png"
 const SPRITE_PLAYER_ARCHER_SHEET := "res://assets/units/player_archer_sheet.png"
+const SPRITE_PLAYER_EAGLE_SHEET := "res://assets/units/player_eagle_sheet.png"
 ## Enemy infantry / archer / flyer / boss: custom sheets. Field still Kenney until replaced.
 const SPRITE_ENEMY_INFANTRY := "res://assets/units/enemy_infantry.png"
 const SPRITE_ENEMY_INFANTRY_SHEET := "res://assets/units/enemy_infantry_sheet.png"

@@ -44,6 +44,25 @@ func hire_infantry() -> bool:
 	return true
 
 
+func hire_eagle() -> bool:
+	if GameState.is_game_over:
+		hire_failed.emit("Game over")
+		return false
+	if not GameState.try_spend(GameConfig.COST_PLAYER_EAGLE):
+		hire_failed.emit("Not enough gold")
+		return false
+	var sector := randi() % GameConfig.SECTOR_COUNT
+	var unit := _factory.spawn_player_eagle(sector)
+	if unit == null:
+		GameState.add_gold(GameConfig.COST_PLAYER_EAGLE)
+		hire_failed.emit("Spawn failed")
+		return false
+	GameState.unit_hired.emit(GameConfig.UnitKind.EAGLE, sector)
+	hire_succeeded.emit(GameConfig.UnitKind.EAGLE, sector)
+	Sfx.play_hire()
+	return true
+
+
 func begin_archer_hire() -> void:
 	if GameState.is_game_over:
 		hire_failed.emit("Game over")

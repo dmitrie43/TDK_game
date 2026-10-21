@@ -69,13 +69,17 @@ func _load_body_texture() -> void:
 
 
 func _sheet_path() -> String:
-	## Animated sheets: player ground + enemy infantry/archer/flyer/boss.
+	## Animated sheets: player units + enemy infantry/archer/flyer/boss.
+	if faction == GameConfig.Faction.PLAYER:
+		match kind:
+			GameConfig.UnitKind.ARCHER:
+				return GameConfig.SPRITE_PLAYER_ARCHER_SHEET
+			GameConfig.UnitKind.EAGLE:
+				return GameConfig.SPRITE_PLAYER_EAGLE_SHEET
+			_:
+				return GameConfig.SPRITE_PLAYER_INFANTRY_SHEET
 	if is_flying:
 		return GameConfig.SPRITE_ENEMY_FLYER_SHEET
-	if faction == GameConfig.Faction.PLAYER:
-		if kind == GameConfig.UnitKind.ARCHER:
-			return GameConfig.SPRITE_PLAYER_ARCHER_SHEET
-		return GameConfig.SPRITE_PLAYER_INFANTRY_SHEET
 	if kind == GameConfig.UnitKind.BOSS:
 		return GameConfig.SPRITE_ENEMY_BOSS_KNIGHT_SHEET
 	if kind == GameConfig.UnitKind.ARCHER:
@@ -86,12 +90,16 @@ func _sheet_path() -> String:
 
 
 func _sprite_path() -> String:
+	if faction == GameConfig.Faction.PLAYER:
+		match kind:
+			GameConfig.UnitKind.ARCHER:
+				return GameConfig.SPRITE_PLAYER_ARCHER
+			GameConfig.UnitKind.EAGLE:
+				return GameConfig.SPRITE_PLAYER_EAGLE
+			_:
+				return GameConfig.SPRITE_PLAYER_INFANTRY
 	if is_flying:
 		return GameConfig.SPRITE_ENEMY_FLYER
-	if faction == GameConfig.Faction.PLAYER:
-		if kind == GameConfig.UnitKind.ARCHER:
-			return GameConfig.SPRITE_PLAYER_ARCHER
-		return GameConfig.SPRITE_PLAYER_INFANTRY
 	if kind == GameConfig.UnitKind.ARCHER:
 		return GameConfig.SPRITE_ENEMY_ARCHER
 	return GameConfig.SPRITE_ENEMY_INFANTRY
@@ -245,6 +253,8 @@ func _update_label() -> void:
 			k = "Fly"
 		GameConfig.UnitKind.BOSS:
 			k = "Boss"
+		GameConfig.UnitKind.EAGLE:
+			k = "Eag"
 		_:
 			k = "Inf"
 	_label.text = "%s-%s" % [tag, k]
@@ -258,10 +268,36 @@ func push_outward_one_ring() -> bool:
 func take_damage(amount: int) -> void:
 	if not _alive:
 		return
+	if _try_dodge_damage():
+		_spawn_dodge_popup()
+		return
 	hp = maxi(0, hp - amount)
 	_spawn_damage_popup(amount)
 	if hp <= 0:
 		_die()
+
+
+func _try_dodge_damage() -> bool:
+	## Eagle maneuverability upgrade: chance to ignore incoming hits.
+	if faction != GameConfig.Faction.PLAYER or kind != GameConfig.UnitKind.EAGLE:
+		return false
+	var lvl: int = GameState.get_upgrade_level(&"eag_maneuver")
+	if lvl <= 0:
+		return false
+	var chance: float = GameConfig.UPG_EAG_MANEUVER_DODGE_PER_LEVEL * float(lvl)
+	return randf() < chance
+
+
+func _spawn_dodge_popup() -> void:
+	var popup := DamagePopup.new()
+	popup.setup_text("мисс", Color(0.55, 0.85, 1.0, 1.0))
+	var parent_node := get_parent()
+	if parent_node:
+		parent_node.add_child(popup)
+		popup.position = position + Vector2(0, -28)
+	else:
+		add_child(popup)
+		popup.position = Vector2(0, -28)
 
 
 func _spawn_damage_popup(amount: int) -> void:
@@ -332,7 +368,10 @@ func try_attack_unit(other: UnitBase) -> bool:
 		Sfx.play_arrow()
 		if faction == GameConfig.Faction.PLAYER:
 			_apply_archer_on_hit(other)
-	other.take_damage(damage)
+	var dealt := damage
+	if kind == GameConfig.UnitKind.EAGLE and other.is_flying:
+		dealt = int(round(float(damage) * GameConfig.PLAYER_EAGLE_AIR_DAMAGE_MULT))
+	other.take_damage(dealt)
 	_attack_timer = attack_cooldown
 	_begin_attack_anim()
 	return true
