@@ -1,0 +1,10 @@
+Kenney assets (CC0 1.0) — free for any use.
+
+Packs used:
+- Tiny Dungeon — https://kenney.nl/assets/tiny-dungeon
+  → unit sprites in assets/kenney/units/
+- Tiny Town — https://kenney.nl/assets/tiny-town
+  → kingdom castle: assets/kenney/kingdom/castle.png
+  → grass field (tiled): assets/kenney/field/grass_field.png
+
+See License_TinyDungeon.txt and License_TinyTown.txt.

@@ -1,0 +1,37 @@
+[gd_scene load_steps=8 format=3 uid="uid://cyc8reae2m4uq"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/world/sector_map.gd" id="2_sector"]
+[ext_resource type="Script" path="res://scripts/world/kingdom.gd" id="3_kingdom"]
+[ext_resource type="Script" path="res://scripts/systems/unit_factory.gd" id="4_factory"]
+[ext_resource type="Script" path="res://scripts/systems/wave_manager.gd" id="5_waves"]
+[ext_resource type="Script" path="res://scripts/systems/recruitment.gd" id="6_recruit"]
+[ext_resource type="PackedScene" uid="uid://bhudkingdom01" path="res://scenes/ui/hud.tscn" id="7_hud"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="SectorMap" type="Node2D" parent="World"]
+script = ExtResource("2_sector")
+
+[node name="Kingdom" type="Node2D" parent="World"]
+script = ExtResource("3_kingdom")
+
+[node name="Units" type="Node2D" parent="World"]
+
+[node name="UnitFactory" type="Node" parent="."]
+script = ExtResource("4_factory")
+container_path = NodePath("../World/Units")
+
+[node name="WaveManager" type="Node" parent="."]
+script = ExtResource("5_waves")
+
+[node name="Recruitment" type="Node" parent="."]
+script = ExtResource("6_recruit")
+
+[node name="HUD" parent="." instance=ExtResource("7_hud")]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 360)
