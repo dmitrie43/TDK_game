@@ -20,17 +20,17 @@ const FAR_OUTER := 420.0
 # --- Upgrades (each can be leveled 1…MAX) ---
 const UPGRADE_MAX_LEVEL := 5
 ## Base gold cost of level 1; higher levels use Upgrades.cost_for_next_level().
-const COST_UPG_INF_HORSES := 110
-const COST_UPG_INF_ARMOR := 160
+const COST_UPG_INF_HORSES := 90
+const COST_UPG_INF_ARMOR := 130
 ## Once-only unlocks (not leveled).
-const COST_UPG_INF_CROSSBOWS := 250
-const COST_UPG_ARC_SIGHT := 250
-const COST_UPG_ARC_BOWS := 210
-const COST_UPG_ARC_FIRE_RATE := 190
-const COST_UPG_KING_DURABILITY := 210
-const COST_UPG_KING_BUILDERS := 230
-const COST_UPG_EAG_FLIGHT := 140
-const COST_UPG_EAG_MANEUVER := 170
+const COST_UPG_INF_CROSSBOWS := 200
+const COST_UPG_ARC_SIGHT := 200
+const COST_UPG_ARC_BOWS := 170
+const COST_UPG_ARC_FIRE_RATE := 150
+const COST_UPG_KING_DURABILITY := 170
+const COST_UPG_KING_BUILDERS := 190
+const COST_UPG_EAG_FLIGHT := 110
+const COST_UPG_EAG_MANEUVER := 140
 ## Per-level effect amounts (total = per_level * current_level).
 const UPG_INF_HORSES_SPEED_PER_LEVEL := 0.08 ## L5 → +40% speed
 const UPG_INF_ARMOR_HP_PER_LEVEL := 20
@@ -93,11 +93,11 @@ const STARTING_GOLD := 100
 const COST_PLAYER_INFANTRY := 45
 const COST_PLAYER_ARCHER := 60
 const COST_PLAYER_EAGLE := 80
-const GOLD_PER_ENEMY_INFANTRY := 9
-const GOLD_PER_ENEMY_ARCHER := 11
-const GOLD_PER_ENEMY_FLYER := 13
-const GOLD_PER_BOSS_KNIGHT := 200
-const GOLD_WAVE_CLEAR := 40
+const GOLD_PER_ENEMY_INFANTRY := 10
+const GOLD_PER_ENEMY_ARCHER := 13
+const GOLD_PER_ENEMY_FLYER := 15
+const GOLD_PER_BOSS_KNIGHT := 300
+const GOLD_WAVE_CLEAR := 50
 
 # --- Boss knight (first at wave 10, then every REPEAT waves, stronger each time) ---
 const BOSS_KNIGHT_WAVE := 10
