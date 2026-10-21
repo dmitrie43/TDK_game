@@ -4,6 +4,8 @@ class_name UnitFactory
 
 const _EnemyFlyer := preload("res://scripts/units/enemy_flyer.gd")
 const _EnemyBossKnight := preload("res://scripts/units/enemy_boss_knight.gd")
+const _EnemyShield := preload("res://scripts/units/enemy_shield.gd")
+const _EnemyVampire := preload("res://scripts/units/enemy_vampire.gd")
 const _PlayerEagle := preload("res://scripts/units/player_eagle.gd")
 
 @export var container_path: NodePath = ^"../Units"
@@ -17,6 +19,14 @@ func _ready() -> void:
 
 func spawn_enemy_infantry(sector: int, pack_slot: int = 0, pack_total: int = 1) -> UnitBase:
 	return _spawn(EnemyInfantry.new(), sector, pack_slot, pack_total)
+
+
+func spawn_enemy_shield(sector: int, pack_slot: int = 0, pack_total: int = 1) -> UnitBase:
+	return _spawn(_EnemyShield.new(), sector, pack_slot, pack_total)
+
+
+func spawn_enemy_vampire(sector: int, pack_slot: int = 0, pack_total: int = 1) -> UnitBase:
+	return _spawn(_EnemyVampire.new(), sector, pack_slot, pack_total)
 
 
 func spawn_enemy_archer(sector: int, pack_slot: int = 0, pack_total: int = 1) -> UnitBase:

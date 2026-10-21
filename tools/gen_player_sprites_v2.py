@@ -344,6 +344,15 @@ def main() -> None:
 		"dark",
 		"dark",
 	)
+	build_unit(
+		"enemy_vampire",
+		REF / "enemy_vamp_idle.jpg",
+		REF / "enemy_vamp_teleport.jpg",
+		REF / "enemy_vamp_attack.jpg",
+		"dark",
+		"dark",
+		"dark",
+	)
 	print("done ->", OUT)
 
 

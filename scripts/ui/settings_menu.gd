@@ -17,6 +17,7 @@ var _volume_slider: HSlider
 var _volume_value: Label
 var _record_label: Label
 var _cheats_check: CheckButton
+var _btn_reset_record: Button
 
 
 func _ready() -> void:
@@ -59,7 +60,7 @@ func _build_ui() -> void:
 	add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(420, 320)
+	panel.custom_minimum_size = Vector2(420, 380)
 	panel.add_theme_stylebox_override("panel", _panel_style())
 	center.add_child(panel)
 
@@ -91,10 +92,22 @@ func _build_ui() -> void:
 	btn_close.pressed.connect(close_menu)
 	header.add_child(btn_close)
 
+	var record_row := HBoxContainer.new()
+	record_row.add_theme_constant_override("separation", 10)
+	root.add_child(record_row)
+
 	_record_label = Label.new()
+	_record_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_record_label.add_theme_font_size_override("font_size", 14)
 	_record_label.add_theme_color_override("font_color", COL_GOLD)
-	root.add_child(_record_label)
+	record_row.add_child(_record_label)
+
+	_btn_reset_record = Button.new()
+	_btn_reset_record.text = "Сбросить"
+	_btn_reset_record.custom_minimum_size = Vector2(100, 30)
+	_style_button(_btn_reset_record)
+	_btn_reset_record.pressed.connect(_on_reset_record)
+	record_row.add_child(_btn_reset_record)
 
 	var sep := HSeparator.new()
 	root.add_child(sep)
@@ -138,14 +151,14 @@ func _build_ui() -> void:
 	root.add_child(_cheats_check)
 
 	var cheats_hint := Label.new()
-	cheats_hint.text = "Появится кнопка «+1000 золота» в боковом меню."
+	cheats_hint.text = "В боковом меню: +золото и переход на выбранную волну. Пока читы включены, рекорд не сохраняется."
 	cheats_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	cheats_hint.add_theme_font_size_override("font_size", 11)
 	cheats_hint.add_theme_color_override("font_color", Color(0.7, 0.75, 0.65, 1))
 	root.add_child(cheats_hint)
 
 	var hint := Label.new()
-	hint.text = "Esc — закрыть. Рекорд волн сохраняется автоматически."
+	hint.text = "Esc — закрыть. Рекорд пишется только без читов."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 11)
 	hint.add_theme_color_override("font_color", Color(0.7, 0.75, 0.65, 1))
@@ -173,6 +186,10 @@ func _on_cheats_toggled(pressed: bool) -> void:
 	GameState.set_cheats_enabled(pressed)
 
 
+func _on_reset_record() -> void:
+	GameState.reset_best_wave()
+
+
 func _on_best_wave(best: int) -> void:
 	if _record_label == null:
 		return
@@ -180,6 +197,8 @@ func _on_best_wave(best: int) -> void:
 		_record_label.text = "Рекорд волн: —"
 	else:
 		_record_label.text = "Рекорд волн: %d" % best
+	if _btn_reset_record:
+		_btn_reset_record.disabled = best <= 0
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -14,6 +14,7 @@ var _waiting_to_spawn: bool = true
 
 
 func _ready() -> void:
+	add_to_group("wave_manager")
 	_factory = get_node(factory_path)
 	_running = auto_start
 	_waiting_to_spawn = true
@@ -54,12 +55,20 @@ func _start_wave() -> void:
 	var total := _enemy_total_for_wave(_wave_index)
 	var flyer_count := _flyer_count_for_wave(_wave_index, total)
 	var archer_count := _archer_count_for_wave(_wave_index, total - flyer_count)
-	var infantry_count := maxi(0, total - archer_count - flyer_count)
+	var after_air := maxi(0, total - archer_count - flyer_count)
+	var vampire_count := _vampire_count_for_wave(_wave_index, after_air)
+	var ground := maxi(0, after_air - vampire_count)
+	var shield_count := _shield_count_for_wave(_wave_index, ground)
+	var infantry_count := maxi(0, ground - shield_count)
 
 	## Queue of spawn callables — packed into shared sectors by wave.
 	var jobs: Array[Callable] = []
 	for i in infantry_count:
 		jobs.append(_factory.spawn_enemy_infantry)
+	for i in shield_count:
+		jobs.append(_factory.spawn_enemy_shield)
+	for i in vampire_count:
+		jobs.append(_factory.spawn_enemy_vampire)
 	for i in archer_count:
 		jobs.append(_factory.spawn_enemy_archer)
 	for i in flyer_count:
@@ -136,7 +145,52 @@ func _flyer_count_for_wave(wave: int, total: int) -> int:
 	return mini(n, total)
 
 
+func _shield_count_for_wave(wave: int, ground_slots: int) -> int:
+	## Shield-bearers from wave 3: take a share of ground melee slots.
+	if wave < GameConfig.SHIELD_START_WAVE or ground_slots <= 0:
+		return 0
+	var n := 1 + int((wave - GameConfig.SHIELD_START_WAVE) / 3)
+	return mini(n, ground_slots)
+
+
+func _vampire_count_for_wave(wave: int, remaining: int) -> int:
+	## Vampires from wave 7: hunt player squads, grow slowly.
+	if wave < GameConfig.VAMPIRE_START_WAVE or remaining <= 0:
+		return 0
+	var n := 1 + int((wave - GameConfig.VAMPIRE_START_WAVE) / 3)
+	return mini(n, remaining)
+
+
 func skip_to_next_wave() -> void:
 	## Debug helper: force clear delay to finish immediately.
 	if _waiting_to_spawn:
 		_timer = 0.0
+
+
+func cheat_jump_to_wave(wave: int) -> String:
+	## Clear field and start the chosen wave immediately (cheats only).
+	if not GameState.cheats_enabled:
+		return "Читы выключены"
+	if GameState.is_game_over:
+		return "Игра окончена"
+	var target := maxi(1, wave)
+	_clear_all_enemies()
+	_wave_index = target - 1
+	_waiting_to_spawn = false
+	_timer = 0.0
+	_running = true
+	_start_wave()
+	return ""
+
+
+func _clear_all_enemies() -> void:
+	for n in get_tree().get_nodes_in_group("enemy_units"):
+		if n is UnitBase:
+			var u := n as UnitBase
+			if u._alive:
+				u._alive = false
+				u.remove_from_group("units")
+				u.remove_from_group("enemy_units")
+			u.queue_free()
+		elif is_instance_valid(n):
+			n.queue_free()

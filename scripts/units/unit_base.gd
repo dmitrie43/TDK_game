@@ -30,6 +30,7 @@ var _body_tex: Texture2D
 var _sheet_tex: Texture2D
 var _anim_time: float = 0.0
 var _attack_anim_left: float = 0.0
+var _teleport_anim_left: float = 0.0
 var _moved_this_frame: bool = false
 var _facing_right: bool = true
 ## Status from player archer boss-rewards (enemies only).
@@ -84,6 +85,10 @@ func _sheet_path() -> String:
 		return GameConfig.SPRITE_ENEMY_BOSS_KNIGHT_SHEET
 	if kind == GameConfig.UnitKind.ARCHER:
 		return GameConfig.SPRITE_ENEMY_ARCHER_SHEET
+	if kind == GameConfig.UnitKind.SHIELD:
+		return GameConfig.SPRITE_ENEMY_SHIELD_SHEET
+	if kind == GameConfig.UnitKind.VAMPIRE:
+		return GameConfig.SPRITE_ENEMY_VAMPIRE_SHEET
 	if kind == GameConfig.UnitKind.INFANTRY:
 		return GameConfig.SPRITE_ENEMY_INFANTRY_SHEET
 	return ""
@@ -102,6 +107,10 @@ func _sprite_path() -> String:
 		return GameConfig.SPRITE_ENEMY_FLYER
 	if kind == GameConfig.UnitKind.ARCHER:
 		return GameConfig.SPRITE_ENEMY_ARCHER
+	if kind == GameConfig.UnitKind.SHIELD:
+		return GameConfig.SPRITE_ENEMY_SHIELD
+	if kind == GameConfig.UnitKind.VAMPIRE:
+		return GameConfig.SPRITE_ENEMY_VAMPIRE
 	return GameConfig.SPRITE_ENEMY_INFANTRY
 
 
@@ -176,6 +185,12 @@ func _anim_src_rect() -> Rect2:
 		var t := 1.0 - (_attack_anim_left / GameConfig.ANIM_ATTACK_DURATION)
 		var col := clampi(int(t * float(GameConfig.UNIT_SHEET_COLS)), 0, GameConfig.UNIT_SHEET_COLS - 1)
 		return GameSprites.sheet_frame_rect(col, row, GameConfig.UNIT_SHEET_FRAME)
+	if _teleport_anim_left > 0.0:
+		## Vampire blink: row 1 is dissolve / reappear frames.
+		row = 1
+		var tt := 1.0 - (_teleport_anim_left / GameConfig.ANIM_TELEPORT_DURATION)
+		var col_tp := clampi(int(tt * float(GameConfig.UNIT_SHEET_COLS)), 0, GameConfig.UNIT_SHEET_COLS - 1)
+		return GameSprites.sheet_frame_rect(col_tp, row, GameConfig.UNIT_SHEET_FRAME)
 	if is_flying:
 		## Bats always flap (row 1 = flap poses); slightly faster while chasing.
 		row = 1
@@ -193,6 +208,7 @@ func _physics_process(delta: float) -> void:
 	_moved_this_frame = false
 	_attack_timer = maxf(0.0, _attack_timer - delta)
 	_attack_anim_left = maxf(0.0, _attack_anim_left - delta)
+	_teleport_anim_left = maxf(0.0, _teleport_anim_left - delta)
 	_tick_status(delta)
 	_tick_ai(delta)
 	_anim_time += delta
@@ -237,6 +253,12 @@ func _begin_attack_anim() -> void:
 	_attack_anim_left = GameConfig.ANIM_ATTACK_DURATION
 
 
+func _begin_teleport_anim() -> void:
+	if _sheet_tex == null:
+		return
+	_teleport_anim_left = GameConfig.ANIM_TELEPORT_DURATION
+
+
 func _tick_ai(_delta: float) -> void:
 	pass
 
@@ -255,6 +277,10 @@ func _update_label() -> void:
 			k = "Boss"
 		GameConfig.UnitKind.EAGLE:
 			k = "Eag"
+		GameConfig.UnitKind.SHIELD:
+			k = "Shd"
+		GameConfig.UnitKind.VAMPIRE:
+			k = "Vmp"
 		_:
 			k = "Inf"
 	_label.text = "%s-%s" % [tag, k]
@@ -334,6 +360,10 @@ func _kill_gold() -> int:
 			return GameConfig.GOLD_PER_ENEMY_FLYER
 		GameConfig.UnitKind.BOSS:
 			return GameConfig.GOLD_PER_BOSS_KNIGHT
+		GameConfig.UnitKind.SHIELD:
+			return GameConfig.GOLD_PER_ENEMY_SHIELD
+		GameConfig.UnitKind.VAMPIRE:
+			return GameConfig.GOLD_PER_ENEMY_VAMPIRE
 		_:
 			return GameConfig.GOLD_PER_ENEMY_INFANTRY
 
@@ -342,6 +372,8 @@ func can_attack_target(other: UnitBase) -> bool:
 	if other == null or not is_instance_valid(other) or not other._alive:
 		return false
 	if other.faction == faction:
+		return false
+	if other.is_flying and kind == GameConfig.UnitKind.VAMPIRE:
 		return false
 	if other.is_flying and kind == GameConfig.UnitKind.INFANTRY:
 		## Player infantry with Crossbows can engage flyers.
@@ -371,7 +403,16 @@ func try_attack_unit(other: UnitBase) -> bool:
 	var dealt := damage
 	if kind == GameConfig.UnitKind.EAGLE and other.is_flying:
 		dealt = int(round(float(damage) * GameConfig.PLAYER_EAGLE_AIR_DAMAGE_MULT))
+	## Shield resists archer fire and softens infantry hits.
+	if other.kind == GameConfig.UnitKind.SHIELD:
+		if kind == GameConfig.UnitKind.ARCHER:
+			dealt = maxi(1, int(round(float(dealt) * GameConfig.ENEMY_SHIELD_ARCHER_DAMAGE_MULT)))
+		elif kind == GameConfig.UnitKind.INFANTRY:
+			dealt = maxi(1, int(round(float(dealt) * GameConfig.ENEMY_SHIELD_INFANTRY_DAMAGE_MULT)))
 	other.take_damage(dealt)
+	if kind == GameConfig.UnitKind.VAMPIRE and dealt > 0:
+		var heal := maxi(1, int(round(float(dealt) * GameConfig.ENEMY_VAMPIRE_LIFESTEAL)))
+		hp = mini(max_hp, hp + heal)
 	_attack_timer = attack_cooldown
 	_begin_attack_anim()
 	return true

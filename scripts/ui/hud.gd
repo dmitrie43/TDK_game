@@ -27,6 +27,9 @@ const _BossRewardMenuScript := preload("res://scripts/ui/boss_reward_menu.gd")
 @onready var cheat_sep: HSeparator = %CheatSep
 @onready var cheat_title: Label = %CheatTitle
 @onready var btn_cheat_gold: Button = %BtnCheatGold
+@onready var cheat_wave_row: HBoxContainer = %CheatWaveRow
+@onready var cheat_wave_edit: LineEdit = %CheatWaveEdit
+@onready var btn_cheat_wave: Button = %BtnCheatWave
 @onready var btn_restart: Button = %BtnRestart
 @onready var sector_buttons: HBoxContainer = %SectorButtons
 
@@ -81,6 +84,8 @@ func _ready() -> void:
 	btn_upgrades.pressed.connect(_on_open_upgrades)
 	btn_settings.pressed.connect(_on_open_settings)
 	btn_cheat_gold.pressed.connect(_on_cheat_gold)
+	btn_cheat_wave.pressed.connect(_on_cheat_wave)
+	cheat_wave_edit.text_submitted.connect(func(_t: String) -> void: _on_cheat_wave())
 	btn_restart.pressed.connect(_on_restart)
 	GameState.cheats_changed.connect(_on_cheats_changed)
 	_build_sector_buttons()
@@ -97,6 +102,8 @@ func _ready() -> void:
 	btn_upgrades.text = "Улучшения"
 	btn_settings.text = "Настройки"
 	btn_cheat_gold.text = "+%d золота" % GameState.CHEAT_GOLD_AMOUNT
+	btn_cheat_wave.text = "Перейти"
+	cheat_wave_edit.placeholder_text = "№ волны"
 	btn_restart.text = "Заново"
 	status_label.text = "Нанимайте войска справа."
 	wave_label.text = "Волна: —"
@@ -136,6 +143,7 @@ func _apply_menu_style() -> void:
 	_style_button(btn_upgrades)
 	_style_button(btn_settings)
 	_style_button(btn_cheat_gold)
+	_style_button(btn_cheat_wave)
 	cheat_title.add_theme_color_override("font_color", COL_GOLD)
 	_style_button(btn_restart, true)
 
@@ -383,6 +391,7 @@ func _on_cheats_changed(enabled: bool) -> void:
 	cheat_sep.visible = enabled
 	cheat_title.visible = enabled
 	btn_cheat_gold.visible = enabled
+	cheat_wave_row.visible = enabled
 	call_deferred("_fit_menu_heights")
 
 
@@ -394,6 +403,41 @@ func _on_cheat_gold() -> void:
 	status_label.add_theme_color_override("font_color", COL_GOLD)
 
 
+func _on_cheat_wave() -> void:
+	if not GameState.cheats_enabled:
+		return
+	if GameState.is_game_over:
+		status_label.text = "Игра окончена"
+		status_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.4, 1))
+		return
+	var raw := cheat_wave_edit.text.strip_edges()
+	if not raw.is_valid_int():
+		status_label.text = "Введите номер волны"
+		status_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.4, 1))
+		return
+	var wave := int(raw)
+	if wave < 1:
+		status_label.text = "Волна ≥ 1"
+		status_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.4, 1))
+		return
+	var wm := get_tree().get_first_node_in_group("wave_manager")
+	if wm == null:
+		var main := get_tree().current_scene
+		if main != null:
+			wm = main.get_node_or_null("WaveManager")
+	if wm == null or not wm.has_method("cheat_jump_to_wave"):
+		status_label.text = "WaveManager не найден"
+		status_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.4, 1))
+		return
+	var err: String = wm.call("cheat_jump_to_wave", wave)
+	if err != "":
+		status_label.text = err
+		status_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.4, 1))
+		return
+	status_label.text = "Чит: волна %d" % wave
+	status_label.add_theme_color_override("font_color", COL_GOLD)
+
+
 func _on_restart() -> void:
 	get_tree().paused = false
 	GameState.reset_run()
@@ -402,8 +446,14 @@ func _on_restart() -> void:
 
 func _on_game_over(victory: bool) -> void:
 	var base := "Победа!" if victory else "Королевство пало"
-	if GameState.current_wave > 0 and GameState.current_wave >= GameState.best_wave:
+	if (
+		not GameState.cheats_enabled
+		and GameState.current_wave > 0
+		and GameState.current_wave >= GameState.best_wave
+	):
 		base += " · рекорд: %d" % GameState.best_wave
+	elif GameState.cheats_enabled:
+		base += " · читы (рекорд не пишется)"
 	status_label.text = base
 	status_label.add_theme_color_override(
 		"font_color",

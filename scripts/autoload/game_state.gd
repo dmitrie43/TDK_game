@@ -146,10 +146,19 @@ func notify_kingdom_hp(current: int, maximum: int) -> void:
 
 func _on_wave_started_for_record(wave_index: int) -> void:
 	current_wave = wave_index
+	## Cheats invalidate records — never write best_wave while enabled.
+	if cheats_enabled:
+		return
 	if wave_index > best_wave:
 		best_wave = wave_index
 		best_wave_changed.emit(best_wave)
 		save_settings()
+
+
+func reset_best_wave() -> void:
+	best_wave = 0
+	best_wave_changed.emit(best_wave)
+	save_settings()
 
 
 func load_save() -> void:

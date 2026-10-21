@@ -119,6 +119,26 @@ layout_mode = 2
 text = "+1000 золота"
 visible = false
 
+[node name="CheatWaveRow" type="HBoxContainer" parent="Root/SideMenu/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+visible = false
+
+[node name="CheatWaveEdit" type="LineEdit" parent="Root/SideMenu/Margin/VBox/CheatWaveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Волна"
+alignment = 1
+
+[node name="BtnCheatWave" type="Button" parent="Root/SideMenu/Margin/VBox/CheatWaveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 30)
+layout_mode = 2
+text = "Перейти"
+
 [node name="BtnRestart" type="Button" parent="Root/SideMenu/Margin/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 30)

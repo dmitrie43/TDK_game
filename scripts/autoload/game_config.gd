@@ -60,15 +60,31 @@ const PROJECTILE_LIFETIME := 1.0
 # --- Enemy base stats (mild bump vs original easy pass) ---
 const ENEMY_INFANTRY_HP := 50
 const ENEMY_INFANTRY_DAMAGE := 11
+const ENEMY_SHIELD_HP := 40
+const ENEMY_SHIELD_DAMAGE := 8
+## Player archers deal this fraction of damage to shield-bearers (80% reduction → 0.2).
+const ENEMY_SHIELD_ARCHER_DAMAGE_MULT := 0.2
+## Infantry deal this fraction of damage to shield-bearers (20% reduction → 0.8).
+const ENEMY_SHIELD_INFANTRY_DAMAGE_MULT := 0.8
 const ENEMY_ARCHER_HP := 45
 const ENEMY_ARCHER_DAMAGE := 9
 const ENEMY_FLYER_HP := 40
 const ENEMY_FLYER_DAMAGE := 16
+const ENEMY_VAMPIRE_HP := 40
+const ENEMY_VAMPIRE_DAMAGE := 12
+## Heal for this fraction of damage dealt on hit.
+const ENEMY_VAMPIRE_LIFESTEAL := 0.5
 
 # --- Movement ---
 const ENEMY_INFANTRY_SPEED := 55.0
+const ENEMY_SHIELD_SPEED := 38.0
 const ENEMY_ARCHER_SPEED := 45.0
 const ENEMY_FLYER_SPEED := 80.0
+const ENEMY_VAMPIRE_SPEED := 90.0
+## Shield march is slower than other ground enemies.
+const ENEMY_SHIELD_STEP_INTERVAL := 6.5
+## Vampire teleports toward prey this often (faster than standard 4.5s march).
+const ENEMY_VAMPIRE_STEP_INTERVAL := 4.0
 const PLAYER_INFANTRY_SPEED := 70.0
 const PLAYER_EAGLE_SPEED := 78.0
 const PLAYER_EAGLE_HP := 100
@@ -77,6 +93,9 @@ const PLAYER_EAGLE_DAMAGE := 20
 const PLAYER_EAGLE_AIR_DAMAGE_MULT := 1.3
 ## Discrete enemy march: Far → Mid → Near once per interval (not continuous run).
 const ENEMY_STEP_INTERVAL := 4.5
+## How far a vampire blinks toward its target each teleport.
+const ENEMY_VAMPIRE_TELEPORT_RANGE := 110.0
+const ANIM_TELEPORT_DURATION := 0.28
 
 # --- Boss kill rewards (free pick of 1 from 2 random) ---
 const BOSS_REWARD_FROST_DURATION := 2.0
@@ -94,10 +113,16 @@ const COST_PLAYER_INFANTRY := 45
 const COST_PLAYER_ARCHER := 60
 const COST_PLAYER_EAGLE := 80
 const GOLD_PER_ENEMY_INFANTRY := 10
+const GOLD_PER_ENEMY_SHIELD := 18
 const GOLD_PER_ENEMY_ARCHER := 13
 const GOLD_PER_ENEMY_FLYER := 15
+const GOLD_PER_ENEMY_VAMPIRE := 20
 const GOLD_PER_BOSS_KNIGHT := 300
 const GOLD_WAVE_CLEAR := 50
+## Shield-bearers first appear on this wave index.
+const SHIELD_START_WAVE := 3
+## Vampires first appear on this wave index.
+const VAMPIRE_START_WAVE := 7
 
 # --- Boss knight (first at wave 10, then every REPEAT waves, stronger each time) ---
 const BOSS_KNIGHT_WAVE := 10
@@ -133,7 +158,7 @@ const FLYER_START_WAVE := 5
 
 enum Zone { KINGDOM, NEAR, MID, FAR, OUT }
 enum Faction { PLAYER, ENEMY }
-enum UnitKind { INFANTRY, ARCHER, FLYER, BOSS, EAGLE }
+enum UnitKind { INFANTRY, ARCHER, FLYER, BOSS, EAGLE, SHIELD, VAMPIRE }
 ## Enemy march rings along a sector ray.
 enum RouteStep { FAR, MID, NEAR }
 
@@ -148,10 +173,14 @@ const SPRITE_PLAYER_EAGLE_SHEET := "res://assets/units/player_eagle_sheet.png"
 ## Enemy infantry / archer / flyer / boss: custom sheets. Field still Kenney until replaced.
 const SPRITE_ENEMY_INFANTRY := "res://assets/units/enemy_infantry.png"
 const SPRITE_ENEMY_INFANTRY_SHEET := "res://assets/units/enemy_infantry_sheet.png"
+const SPRITE_ENEMY_SHIELD := "res://assets/units/enemy_shield.png"
+const SPRITE_ENEMY_SHIELD_SHEET := "res://assets/units/enemy_shield_sheet.png"
 const SPRITE_ENEMY_ARCHER := "res://assets/units/enemy_archer.png"
 const SPRITE_ENEMY_ARCHER_SHEET := "res://assets/units/enemy_archer_sheet.png"
 const SPRITE_ENEMY_FLYER := "res://assets/units/enemy_flyer.png"
 const SPRITE_ENEMY_FLYER_SHEET := "res://assets/units/enemy_flyer_sheet.png"
+const SPRITE_ENEMY_VAMPIRE := "res://assets/units/enemy_vampire.png"
+const SPRITE_ENEMY_VAMPIRE_SHEET := "res://assets/units/enemy_vampire_sheet.png"
 const SPRITE_ENEMY_BOSS_KNIGHT := "res://assets/units/enemy_boss_knight.png"
 const SPRITE_ENEMY_BOSS_KNIGHT_SHEET := "res://assets/units/enemy_boss_knight_sheet.png"
 const SPRITE_KINGDOM := "res://assets/kenney/kingdom/castle.png"
