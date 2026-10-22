@@ -213,3 +213,9 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "Орлы"
+
+[node name="BtnHealer" type="Button" parent="Root/HireMenu/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "Лекарь"

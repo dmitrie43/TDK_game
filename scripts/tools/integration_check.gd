@@ -137,15 +137,21 @@ func _run() -> void:
 		ok = false
 
 	state.set("gold", 200)
-	recruitment.call("begin_archer_hire")
-	if not recruitment.get("pending_archer_hire"):
-		print("FAIL archer hire pending")
-		ok = false
-	else:
-		var ok_arc: bool = recruitment.call("confirm_archer_sector", 3)
-		print("OK archer hire sector3=", ok_arc)
+	if GameConfig.ARCHER_AUTO_PLACE:
+		var ok_arc: bool = recruitment.call("hire_archer_auto")
+		print("OK archer auto hire=", ok_arc)
 		if not ok_arc:
 			ok = false
+	else:
+		recruitment.call("begin_archer_hire")
+		if not recruitment.get("pending_archer_hire"):
+			print("FAIL archer hire pending")
+			ok = false
+		else:
+			var ok_arc2: bool = recruitment.call("confirm_archer_sector", 3)
+			print("OK archer hire sector3=", ok_arc2)
+			if not ok_arc2:
+				ok = false
 
 	# Upgrades: buy horses + durability; HUD has open handler
 	if not hud.has_method("_on_open_upgrades"):

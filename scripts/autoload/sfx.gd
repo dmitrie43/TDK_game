@@ -5,11 +5,13 @@ const PATH_ARROW := "res://audio/sfx_arrow.wav"
 const PATH_HIRE := "res://audio/sfx_hire.wav"
 const PATH_HIT := "res://audio/sfx_kingdom_hit.wav"
 const PATH_WAVE := "res://audio/sfx_wave.wav"
+const PATH_HEAL := "res://audio/sfx_heal.wav"
 
 var _arrow: AudioStream
 var _hire: AudioStream
 var _kingdom_hit: AudioStream
 var _wave: AudioStream
+var _heal: AudioStream
 var _players: Array[AudioStreamPlayer] = []
 ## 0.0 … 1.0 linear volume for Master bus.
 var _volume_linear: float = 1.0
@@ -20,6 +22,7 @@ func _ready() -> void:
 	_hire = _load_stream(PATH_HIRE)
 	_kingdom_hit = _load_stream(PATH_HIT)
 	_wave = _load_stream(PATH_WAVE)
+	_heal = _load_stream(PATH_HEAL)
 	for i in 8:
 		var p := AudioStreamPlayer.new()
 		p.bus = "Master"
@@ -69,6 +72,10 @@ func play_kingdom_hit() -> void:
 
 func play_wave() -> void:
 	_play(_wave, -1.5)
+
+
+func play_heal() -> void:
+	_play(_heal, -3.0)
 
 
 func _load_stream(path: String) -> AudioStream:

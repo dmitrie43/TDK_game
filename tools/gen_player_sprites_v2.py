@@ -345,6 +345,15 @@ def main() -> None:
 		"dark",
 	)
 	build_unit(
+		"player_healer",
+		REF / "player_healer_idle.jpg",
+		REF / "player_healer_walk.jpg",
+		REF / "player_healer_heal.jpg",
+		"dark",
+		"dark",
+		"dark",
+	)
+	build_unit(
 		"enemy_vampire",
 		REF / "enemy_vamp_idle.jpg",
 		REF / "enemy_vamp_teleport.jpg",

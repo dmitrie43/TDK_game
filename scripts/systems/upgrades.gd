@@ -12,10 +12,13 @@ const ID_KING_DURABILITY := &"king_durability"
 const ID_KING_BUILDERS := &"king_builders"
 const ID_EAG_FLIGHT := &"eag_flight"
 const ID_EAG_MANEUVER := &"eag_maneuver"
+const ID_HEA_HERBS := &"hea_herbs"
+const ID_HEA_HANDS := &"hea_hands"
 
 const CAT_INFANTRY := &"infantry"
 const CAT_ARCHERS := &"archers"
 const CAT_EAGLES := &"eagles"
+const CAT_HEALERS := &"healers"
 const CAT_KINGDOM := &"kingdom"
 
 
@@ -24,6 +27,7 @@ static func categories() -> Array[Dictionary]:
 		{"id": CAT_INFANTRY, "title": "Пехота"},
 		{"id": CAT_ARCHERS, "title": "Лучники"},
 		{"id": CAT_EAGLES, "title": "Орлы"},
+		{"id": CAT_HEALERS, "title": "Лекари"},
 		{"id": CAT_KINGDOM, "title": "Королевство"},
 	]
 
@@ -45,6 +49,8 @@ static func upgrades_for(category: StringName) -> Array[Dictionary]:
 			ids = [ID_ARC_BOWS, ID_ARC_SIGHT, ID_ARC_FIRE_RATE]
 		CAT_EAGLES:
 			ids = [ID_EAG_FLIGHT, ID_EAG_MANEUVER]
+		CAT_HEALERS:
+			ids = [ID_HEA_HERBS, ID_HEA_HANDS]
 		CAT_KINGDOM:
 			ids = [ID_KING_DURABILITY, ID_KING_BUILDERS]
 		_:
@@ -112,6 +118,8 @@ static func apply_to_player_unit(unit: UnitBase) -> void:
 		_apply_archer_stats(unit, false)
 	elif unit.kind == GameConfig.UnitKind.EAGLE:
 		_apply_eagle_stats(unit, false)
+	elif unit.kind == GameConfig.UnitKind.HEALER:
+		_apply_healer_stats(unit, false)
 
 
 static func builders_heal_amount() -> int:
@@ -143,6 +151,10 @@ static func _base_cost(upgrade_id: StringName) -> int:
 			return GameConfig.COST_UPG_EAG_FLIGHT
 		ID_EAG_MANEUVER:
 			return GameConfig.COST_UPG_EAG_MANEUVER
+		ID_HEA_HERBS:
+			return GameConfig.COST_UPG_HEA_HERBS
+		ID_HEA_HANDS:
+			return GameConfig.COST_UPG_HEA_HANDS
 		_:
 			return -1
 
@@ -169,6 +181,10 @@ static func _title(upgrade_id: StringName) -> String:
 			return "Полёт"
 		ID_EAG_MANEUVER:
 			return "Маневренность"
+		ID_HEA_HERBS:
+			return "Лечебные травы"
+		ID_HEA_HANDS:
+			return "Быстрые руки"
 		_:
 			return String(upgrade_id)
 
@@ -186,6 +202,8 @@ static func _desc(upgrade_id: StringName, current_lvl: int, preview_lvl: int) ->
 		ID_ARC_BOWS:
 			return "Урон лучников +%d (ур.%d)" % [GameConfig.UPG_ARC_BOWS_DAMAGE_PER_LEVEL * L, L]
 		ID_ARC_SIGHT:
+			if GameConfig.ARCHER_FIRE_ALL_SECTORS:
+				return "Лучники достают до дальней дистанции (Far) во всех секторах"
 			return "Стрельба по всему сектору (Far→Near)"
 		ID_ARC_FIRE_RATE:
 			var rate_pct: int = int(round(GameConfig.UPG_ARC_FIRE_RATE_PER_LEVEL * 100.0 * float(L)))
@@ -205,6 +223,16 @@ static func _desc(upgrade_id: StringName, current_lvl: int, preview_lvl: int) ->
 		ID_EAG_MANEUVER:
 			var dodge_pct: int = int(round(GameConfig.UPG_EAG_MANEUVER_DODGE_PER_LEVEL * 100.0 * float(L)))
 			return "Шанс избежать урона %d%% (ур.%d)" % [dodge_pct, L]
+		ID_HEA_HERBS:
+			var heal_pct: int = int(round(
+				(GameConfig.UPG_HEA_HERBS_HEAL_BASE + GameConfig.UPG_HEA_HERBS_HEAL_PER_LEVEL * float(L)) * 100.0
+			))
+			return "Лечение сильнее на %d%% (ур.%d)" % [heal_pct, L]
+		ID_HEA_HANDS:
+			var hands_pct: int = int(round(
+				(GameConfig.UPG_HEA_HANDS_RATE_BASE + GameConfig.UPG_HEA_HANDS_RATE_PER_LEVEL * float(L)) * 100.0
+			))
+			return "Лечит быстрее на %d%% (ур.%d)" % [hands_pct, L]
 		_:
 			return ""
 
@@ -229,6 +257,12 @@ static func _apply_world(upgrade_id: StringName, tree: SceneTree) -> void:
 					var u := n as UnitBase
 					if u.kind == GameConfig.UnitKind.EAGLE and u._alive:
 						_apply_eagle_stats(u, true)
+		ID_HEA_HERBS, ID_HEA_HANDS:
+			for n in tree.get_nodes_in_group("player_units"):
+				if n is UnitBase:
+					var u := n as UnitBase
+					if u.kind == GameConfig.UnitKind.HEALER and u._alive:
+						_apply_healer_stats(u, true)
 		ID_KING_DURABILITY:
 			_apply_kingdom_durability_level_up()
 		ID_KING_BUILDERS:
@@ -268,11 +302,11 @@ static func _apply_archer_stats(unit: UnitBase, live_purchase: bool = false) -> 
 	var bows: int = GameState.get_upgrade_level(ID_ARC_BOWS)
 	var sight: int = GameState.get_upgrade_level(ID_ARC_SIGHT)
 	var rate: int = GameState.get_upgrade_level(ID_ARC_FIRE_RATE)
-	unit.damage = 15 + GameConfig.UPG_ARC_BOWS_DAMAGE_PER_LEVEL * bows
+	unit.damage = GameConfig.PLAYER_ARCHER_DAMAGE + GameConfig.UPG_ARC_BOWS_DAMAGE_PER_LEVEL * bows
 	if sight > 0:
 		unit.attack_range = GameConfig.UPG_ARC_SIGHT_RANGE
 	else:
-		unit.attack_range = GameConfig.ARCHER_RANGE
+		unit.attack_range = GameConfig.player_archer_base_range()
 	if rate > 0:
 		var mult: float = 1.0 + GameConfig.UPG_ARC_FIRE_RATE_PER_LEVEL * float(rate)
 		unit.attack_cooldown = GameConfig.ARCHER_COOLDOWN / mult
@@ -280,7 +314,7 @@ static func _apply_archer_stats(unit: UnitBase, live_purchase: bool = false) -> 
 		unit.attack_cooldown = GameConfig.ARCHER_COOLDOWN
 
 	var boss_hp: int = GameState.boss_reward_stacks(&"boss_arc_armor")
-	var target_max: int = 80 + GameConfig.BOSS_REWARD_ARC_HP * boss_hp
+	var target_max: int = GameConfig.PLAYER_ARCHER_HP + GameConfig.BOSS_REWARD_ARC_HP * boss_hp
 	if unit.max_hp != target_max:
 		var gain: int = target_max - unit.max_hp
 		unit.max_hp = target_max
@@ -310,6 +344,34 @@ static func _apply_eagle_stats(unit: UnitBase, live_purchase: bool = false) -> v
 		elif not live_purchase:
 			unit.hp = unit.max_hp
 	unit.damage = GameConfig.PLAYER_EAGLE_DAMAGE + GameConfig.BOSS_REWARD_EAG_DAMAGE * boss_dmg
+
+
+static func _apply_healer_stats(unit: UnitBase, live_purchase: bool = false) -> void:
+	var herbs: int = GameState.get_upgrade_level(ID_HEA_HERBS)
+	var hands: int = GameState.get_upgrade_level(ID_HEA_HANDS)
+	var heal_bonus: float = 0.0
+	if herbs > 0:
+		heal_bonus = GameConfig.UPG_HEA_HERBS_HEAL_BASE + GameConfig.UPG_HEA_HERBS_HEAL_PER_LEVEL * float(herbs)
+	var rate_bonus: float = 0.0
+	if hands > 0:
+		rate_bonus = GameConfig.UPG_HEA_HANDS_RATE_BASE + GameConfig.UPG_HEA_HANDS_RATE_PER_LEVEL * float(hands)
+
+	if "heal_amount" in unit:
+		unit.heal_amount = maxi(
+			1, int(round(float(GameConfig.PLAYER_HEALER_HEAL) * (1.0 + heal_bonus)))
+		)
+	unit.attack_cooldown = GameConfig.PLAYER_HEALER_COOLDOWN / (1.0 + rate_bonus)
+	unit.damage = 0
+	unit.move_speed = GameConfig.PLAYER_HEALER_SPEED
+
+	var target_max: int = GameConfig.PLAYER_HEALER_HP
+	if unit.max_hp != target_max:
+		var gain: int = target_max - unit.max_hp
+		unit.max_hp = target_max
+		if live_purchase and gain > 0:
+			unit.hp = mini(unit.max_hp, unit.hp + gain)
+		elif not live_purchase:
+			unit.hp = unit.max_hp
 
 
 static func _apply_kingdom_durability_level_up() -> void:

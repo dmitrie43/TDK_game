@@ -77,6 +77,8 @@ func _sheet_path() -> String:
 				return GameConfig.SPRITE_PLAYER_ARCHER_SHEET
 			GameConfig.UnitKind.EAGLE:
 				return GameConfig.SPRITE_PLAYER_EAGLE_SHEET
+			GameConfig.UnitKind.HEALER:
+				return GameConfig.SPRITE_PLAYER_HEALER_SHEET
 			_:
 				return GameConfig.SPRITE_PLAYER_INFANTRY_SHEET
 	if is_flying:
@@ -101,6 +103,8 @@ func _sprite_path() -> String:
 				return GameConfig.SPRITE_PLAYER_ARCHER
 			GameConfig.UnitKind.EAGLE:
 				return GameConfig.SPRITE_PLAYER_EAGLE
+			GameConfig.UnitKind.HEALER:
+				return GameConfig.SPRITE_PLAYER_HEALER
 			_:
 				return GameConfig.SPRITE_PLAYER_INFANTRY
 	if is_flying:
@@ -281,6 +285,8 @@ func _update_label() -> void:
 			k = "Shd"
 		GameConfig.UnitKind.VAMPIRE:
 			k = "Vmp"
+		GameConfig.UnitKind.HEALER:
+			k = "Hea"
 		_:
 			k = "Inf"
 	_label.text = "%s-%s" % [tag, k]
@@ -301,6 +307,18 @@ func take_damage(amount: int) -> void:
 	_spawn_damage_popup(amount)
 	if hp <= 0:
 		_die()
+
+
+func receive_heal(amount: int) -> int:
+	## Returns actual HP restored (0 if full / dead).
+	if not _alive or amount <= 0 or hp >= max_hp:
+		return 0
+	var before := hp
+	hp = mini(max_hp, hp + amount)
+	var gained := hp - before
+	if gained > 0:
+		_spawn_heal_popup(gained)
+	return gained
 
 
 func _try_dodge_damage() -> bool:
@@ -330,6 +348,18 @@ func _spawn_damage_popup(amount: int) -> void:
 	var popup := DamagePopup.new()
 	var col := Color(1.0, 0.45, 0.35, 1.0) if faction == GameConfig.Faction.PLAYER else Color(1.0, 0.9, 0.35, 1.0)
 	popup.setup(amount, col)
+	var parent_node := get_parent()
+	if parent_node:
+		parent_node.add_child(popup)
+		popup.position = position + Vector2(0, -28)
+	else:
+		add_child(popup)
+		popup.position = Vector2(0, -28)
+
+
+func _spawn_heal_popup(amount: int) -> void:
+	var popup := DamagePopup.new()
+	popup.setup_text("+%d" % amount, Color(0.45, 0.95, 0.55, 1.0))
 	var parent_node := get_parent()
 	if parent_node:
 		parent_node.add_child(popup)

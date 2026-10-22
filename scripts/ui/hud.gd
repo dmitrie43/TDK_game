@@ -20,6 +20,7 @@ const _BossRewardMenuScript := preload("res://scripts/ui/boss_reward_menu.gd")
 @onready var btn_infantry: Button = %BtnInfantry
 @onready var btn_archer: Button = %BtnArcher
 @onready var btn_eagle: Button = %BtnEagle
+@onready var btn_healer: Button = %BtnHealer
 @onready var btn_heal: Button = %BtnHeal
 @onready var btn_wave: Button = %BtnWave
 @onready var btn_upgrades: Button = %BtnUpgrades
@@ -79,6 +80,7 @@ func _ready() -> void:
 	btn_infantry.pressed.connect(_on_hire_infantry)
 	btn_archer.pressed.connect(_on_hire_archer)
 	btn_eagle.pressed.connect(_on_hire_eagle)
+	btn_healer.pressed.connect(_on_hire_healer)
 	btn_heal.pressed.connect(_on_heal_kingdom)
 	btn_wave.pressed.connect(_on_push_wave)
 	btn_upgrades.pressed.connect(_on_open_upgrades)
@@ -97,6 +99,7 @@ func _ready() -> void:
 	btn_infantry.text = "Пехота  ·  %d" % GameConfig.COST_PLAYER_INFANTRY
 	btn_archer.text = "Лучники  ·  %d" % GameConfig.COST_PLAYER_ARCHER
 	btn_eagle.text = "Орлы  ·  %d" % GameConfig.COST_PLAYER_EAGLE
+	btn_healer.text = "Лекарь  ·  %d" % GameConfig.COST_PLAYER_HEALER
 	btn_heal.text = "Лечение +%d  ·  %d" % [GameConfig.KINGDOM_HEAL_AMOUNT, GameConfig.COST_KINGDOM_HEAL]
 	btn_wave.text = "Толчок  ·  %d" % GameConfig.COST_PUSH_WAVE
 	btn_upgrades.text = "Улучшения"
@@ -138,6 +141,7 @@ func _apply_menu_style() -> void:
 	_style_button(btn_infantry)
 	_style_button(btn_archer)
 	_style_button(btn_eagle)
+	_style_button(btn_healer)
 	_style_button(btn_heal)
 	_style_button(btn_wave)
 	_style_button(btn_upgrades)
@@ -220,6 +224,14 @@ func _refresh_sector_label() -> void:
 		sector_label.text = "Сектор лучников: 0–7"
 		sector_label.add_theme_color_override("font_color", COL_GOLD)
 		return
+	if GameConfig.ARCHER_AUTO_PLACE:
+		var free := 0
+		for i in GameConfig.SECTOR_COUNT:
+			if not GameState.has_wall_archer(i):
+				free += 1
+		sector_label.text = "Лучники: свободно %d/%d" % [free, GameConfig.SECTOR_COUNT]
+		sector_label.add_theme_color_override("font_color", COL_TEXT)
+		return
 	var s := _recruitment.selected_sector if _recruitment else 0
 	var occupied := " · занят" if GameState.has_wall_archer(s) else ""
 	sector_label.text = "Сектор: %d%s" % [s, occupied]
@@ -283,6 +295,11 @@ func _on_hire_archer() -> void:
 		_recruitment.cancel_archer_hire()
 		call_deferred("_fit_menu_heights")
 		return
+	if GameConfig.ARCHER_AUTO_PLACE:
+		if _recruitment.pending_archer_hire:
+			_recruitment.cancel_archer_hire()
+		_recruitment.hire_archer_auto()
+		return
 	_recruitment.begin_archer_hire()
 
 
@@ -291,6 +308,13 @@ func _on_hire_eagle() -> void:
 		if _recruitment.pending_archer_hire:
 			_recruitment.cancel_archer_hire()
 		_recruitment.hire_eagle()
+
+
+func _on_hire_healer() -> void:
+	if _recruitment:
+		if _recruitment.pending_archer_hire:
+			_recruitment.cancel_archer_hire()
+		_recruitment.hire_healer()
 
 
 func _on_archer_hire_started() -> void:
@@ -322,6 +346,8 @@ func _on_hire_succeeded(kind: GameConfig.UnitKind, sector: int) -> void:
 			name = "Лучники"
 		GameConfig.UnitKind.EAGLE:
 			name = "Орлы"
+		GameConfig.UnitKind.HEALER:
+			name = "Лекарь"
 		_:
 			name = "Пехота"
 	status_label.text = "%s → с.%d" % [name, sector]
@@ -462,6 +488,7 @@ func _on_game_over(victory: bool) -> void:
 	btn_infantry.disabled = true
 	btn_archer.disabled = true
 	btn_eagle.disabled = true
+	btn_healer.disabled = true
 	btn_heal.disabled = true
 	btn_wave.disabled = true
 	btn_upgrades.disabled = true
